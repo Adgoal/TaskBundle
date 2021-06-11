@@ -1,0 +1,24 @@
+services:
+  AdgoalCommon\Task\Application\Processor\JobEventProcessor:
+    calls:
+      - [setLogger, ['@logger']]
+    tags:
+      - { name: 'enqueue.topic_subscriber', client: 'taskevent' }
+      - { name: monolog.logger, channel: Task }
+
+  Enqueue\JobQueue\JobRunner:
+    arguments:
+      - '@AdgoalCommon\Task\Application\Processor\JobProcessor'
+
+  AdgoalCommon\Task\Application\Processor\JobProcessor:
+    arguments:
+      - '@Enqueue\JobQueue\Doctrine\JobStorage'
+      - '@enqueue.client.taskevent.producer'
+      - '%adgoal_task.send_job_status_event%'
+    calls:
+      - [setLogger, ['@logger']]
+    tags:
+      - { name: monolog.logger, channel: Task }
+
+  enqueue.job.processor:
+    alias: '@AdgoalCommon\Task\Application\Processor\JobProcessor'
